@@ -55,7 +55,7 @@ class LaravelYamlGenerator:
         for model_name, config in self.schema.items():
             self._generate_migration(model_name, config)
             self._generate_model(model_name, config)
-            self._generate_filament_resource(model_name, config)
+            # self._generate_filament_resource(model_name, config)
 
     def _generate_migration(self, model_name, config):
         """
