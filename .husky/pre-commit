@@ -1,1 +1,2 @@
-bun test
+python -m unittest discover tests
+flake8 yamavel tests
