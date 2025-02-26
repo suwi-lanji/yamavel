@@ -20,4 +20,4 @@ jobs:
           python -m unittest discover tests
       - name: Run linter
         run: |
-          flake8 laravel_yaml_generator tests
+          flake8 yamavel tests
