@@ -3,13 +3,12 @@ import yaml
 import argparse
 from datetime import datetime
 from inflection import tableize
-from .utils import read_file, write_file, check_table_exists
+from .utils import check_column_exists, read_file, write_file, check_table_exists
 from .exceptions import (
     InvalidYAMLError,
     MissingYAMLFileError,
     UnsupportedColumnTypeError,
     MissingRequiredKeyError,
-    TableAlreadyExistsError,
     InvalidRelationError,
     FileWriteError,
     FileReadError,
@@ -79,12 +78,26 @@ class LaravelYamlGenerator:
             raise MissingRequiredKeyError('columns')
 
         if check_table_exists(self.laravel_root, table_name):
-            raise TableAlreadyExistsError(table_name)
+            self._generate_update_migration(table_name, columns)
+        else:
+            self._create_new_migration(table_name, columns)
 
+    def _create_new_migration(self, table_name, columns):
+        """
+        Create a new migration file for a table that does not exist.
+
+        Args:
+            table_name (str): Name of the table.
+            columns (dict): Column configurations.
+
+        Raises:
+            FileReadError: If there is an error reading the migration stub.
+            FileWriteError: If there is an error writing the migration file.
+        """
         try:
             migration_stub = read_file(os.path.join(os.path.dirname(__file__), 'stubs/migration.stub'))
-        except Exception as e:
-            raise FileReadError(f"Failed to read migration stub: {e}")
+        except Exception:
+            raise FileReadError("Failed to read migration stub.")
 
         column_definitions = self._generate_column_definitions(columns)
         stub = migration_stub.replace('{{table}}', table_name)
@@ -99,8 +112,76 @@ class LaravelYamlGenerator:
         except Exception:
             raise FileWriteError(file_path)
 
+    def _generate_update_migration(self, table_name, columns):
+        """
+        Generate an update migration file for an existing table.
+
+        Args:
+            table_name (str): Name of the table.
+            columns (dict): Column configurations.
+
+        Raises:
+            FileReadError: If there is an error reading the migration stub.
+            FileWriteError: If there is an error writing the migration file.
+        """
+        try:
+            migration_stub = read_file(os.path.join(os.path.dirname(__file__), 'stubs/update_migration.stub'))
+        except Exception:
+            raise FileReadError("Failed to read update migration stub.")
+
+        column_definitions = self._generate_update_column_definitions(table_name, columns)
+        stub = migration_stub.replace('{{table}}', table_name)
+        stub = stub.replace('{{columns}}', column_definitions)
+
+        timestamp = datetime.now().strftime('%Y_%m_%d_%H%M%S')
+        filename = f"{timestamp}_update_{table_name}_table.php"
+        file_path = os.path.join(self.laravel_root, 'database/migrations', filename)
+
+        try:
+            write_file(file_path, stub)
+        except Exception:
+            raise FileWriteError(file_path)
+
+    def _generate_update_column_definitions(self, table_name, columns):
+        """
+        Generate column definitions for an update migration.
+
+        Args:
+            table_name (str): Name of the table.
+            columns (dict): Column configurations.
+
+        Returns:
+            str: Column definitions as a string.
+        """
+        definitions = []
+        for column_name, column_config in columns.items():
+            if not check_column_exists(self.laravel_root, table_name, column_name):
+                column_type = column_config.get('type', 'string')
+                if column_type not in ['id', 'string', 'text', 'integer', 'timestamps', 'unsignedBigInteger']:
+                    raise UnsupportedColumnTypeError(column_type)
+
+                definition = f"$table->{column_type}('{column_name}')"
+                if column_config.get('unique'):
+                    definition += '->unique()'
+                if column_config.get('foreign'):
+                    definition += f"->foreign('{column_name}')->references('id')->on('{column_config['foreign']}')"
+                definitions.append(definition + ";")  # Add semicolon to each definition
+
+        return "\n            ".join(definitions)
+
     def _generate_column_definitions(self, columns):
-        """Generate column definitions for migrations."""
+        """
+        Generate column definitions for migrations.
+
+        Args:
+            columns (dict): Column configurations.
+
+        Returns:
+            str: Column definitions as a string.
+
+        Raises:
+            UnsupportedColumnTypeError: If an unsupported column type is specified.
+        """
         definitions = []
         for column_name, column_config in columns.items():
             column_type = column_config.get('type', 'string')
@@ -114,7 +195,6 @@ class LaravelYamlGenerator:
                 definition += f"->foreign('{column_name}')->references('id')->on('{column_config['foreign']}')"
             definitions.append(definition + ";")  # Add semicolon to each definition
 
-        # Join definitions with newlines and proper indentation
         return "\n            ".join(definitions)
 
     def _generate_model(self, model_name, config):
@@ -131,8 +211,8 @@ class LaravelYamlGenerator:
         """
         try:
             model_stub = read_file(os.path.join(os.path.dirname(__file__), 'stubs/model.stub'))
-        except Exception as e:
-            raise FileReadError(f"Failed to read model stub: {e}")
+        except Exception:
+            raise FileReadError("Failed to read model stub.")
 
         model_stub = model_stub.replace('{{model}}', model_name)
         model_stub = model_stub.replace('{{table}}', config.get('table', tableize(model_name)))
