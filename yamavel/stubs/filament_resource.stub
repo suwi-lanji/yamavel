@@ -1,0 +1,31 @@
+<?php
+
+namespace App\Filament\Resources;
+
+use App\Filament\Resources\{{model}}Resource\Pages;
+use Filament\Forms;
+use Filament\Tables;
+use Filament\Resources\Form;
+use Filament\Resources\Resource;
+use Filament\Resources\Table;
+
+class {{model}}Resource extends Resource
+{
+    protected static ?string $model = \App\Models\{{model}}::class;
+
+    public static function form(Form $form): Form
+    {
+        return $form
+            ->schema([
+                {{formFields}}
+            ]);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->columns([
+                {{tableColumns}}
+            ]);
+    }
+}

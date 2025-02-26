@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyc
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Laravel
+vendor/
+node_modules/
+.env
+storage/
+bootstrap/cache/
+public/storage
