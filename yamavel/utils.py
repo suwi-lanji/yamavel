@@ -1,5 +1,6 @@
 import os
 
+
 def read_file(file_path):
     """Read the contents of a file."""
     if not os.path.exists(file_path):
@@ -34,6 +35,6 @@ def check_column_exists(laravel_root, table_name, column_name):
     for filename in os.listdir(migrations_dir):
         if f"create_{table_name}_table" in filename:
             migration_content = read_file(os.path.join(migrations_dir, filename))
-            if f"$table->" in migration_content and f"'{column_name}'" in migration_content:
+            if "$table->" in migration_content and f"'{column_name}'" in migration_content:
                 return True
     return False

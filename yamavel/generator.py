@@ -3,18 +3,18 @@ import yaml
 import argparse
 from datetime import datetime
 from inflection import tableize
-from .utils import read_file, write_file, check_table_exists, check_column_exists
+from .utils import read_file, write_file, check_table_exists
 from .exceptions import (
     InvalidYAMLError,
     MissingYAMLFileError,
     UnsupportedColumnTypeError,
     MissingRequiredKeyError,
     TableAlreadyExistsError,
-    ColumnAlreadyExistsError,
     InvalidRelationError,
     FileWriteError,
     FileReadError,
 )
+
 
 class LaravelYamlGenerator:
     def __init__(self, yaml_file, laravel_root):
@@ -96,7 +96,7 @@ class LaravelYamlGenerator:
 
         try:
             write_file(file_path, stub)
-        except Exception as e:
+        except Exception:
             raise FileWriteError(file_path)
 
     def _generate_column_definitions(self, columns):
@@ -144,7 +144,7 @@ class LaravelYamlGenerator:
         if not os.path.exists(model_path):
             try:
                 write_file(model_path, model_stub)
-            except Exception as e:
+            except Exception:
                 raise FileWriteError(model_path)
         else:
             print(f"Model {model_name} already exists. Skipping...")
@@ -205,7 +205,7 @@ class LaravelYamlGenerator:
         if not os.path.exists(resource_path):
             try:
                 write_file(resource_path, resource_stub)
-            except Exception as e:
+            except Exception:
                 raise FileWriteError(resource_path)
         else:
             print(f"Filament resource for {model_name} already exists. Skipping...")
@@ -220,7 +220,7 @@ class LaravelYamlGenerator:
         Returns:
             str: Form fields as a string.
         """
-        return ",\n                ".join([f"Forms\Components\TextInput::make('{field}')" for field in fields])
+        return ",\n                ".join([fr"Forms\Components\TextInput::make('{field}')" for field in fields])
 
     def _generate_table_columns(self, columns):
         """
@@ -232,7 +232,8 @@ class LaravelYamlGenerator:
         Returns:
             str: Table columns as a string.
         """
-        return ",\n                ".join([f"Tables\Columns\TextColumn::make('{column}')" for column in columns])
+        return ",\n                ".join([fr"Tables\Columns\TextColumn::make('{column}')" for column in columns])
+
 
 def main():
     """Entry point for the yamavel command-line tool."""
@@ -248,6 +249,7 @@ def main():
     except (InvalidYAMLError, MissingYAMLFileError) as e:
         print(f"Error: {e}")
         exit(1)
+
 
 if __name__ == "__main__":
     main()

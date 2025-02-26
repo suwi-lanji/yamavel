@@ -4,11 +4,10 @@ import shutil
 from yamavel.generator import LaravelYamlGenerator
 from yamavel.exceptions import (
     InvalidYAMLError,
-    MissingYAMLFileError,
     UnsupportedColumnTypeError,
     MissingRequiredKeyError,
-    TableAlreadyExistsError,
 )
+
 
 class TestLaravelYamlGenerator(unittest.TestCase):
     def setUp(self):
@@ -146,6 +145,7 @@ User:
             generator.generate()
 
         os.remove(invalid_yaml_file)
+
 
 if __name__ == '__main__':
     unittest.main()
