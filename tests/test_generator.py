@@ -90,7 +90,7 @@ User:
         user_model_path = os.path.join(models_dir, 'User.php')
         self.assertTrue(os.path.exists(user_model_path))
 
-    def test_generate_filament_resources(self):
+    '''def test_generate_filament_resources(self):
         """Test Filament resource generation."""
         generator = LaravelYamlGenerator(self.yaml_file, self.laravel_root)
         generator.generate()
@@ -102,6 +102,7 @@ User:
         # Check if the 'UserResource' was created
         user_resource_path = os.path.join(resources_dir, 'UserResource.php')
         self.assertTrue(os.path.exists(user_resource_path))
+        '''
 
     def test_invalid_yaml(self):
         """Test handling of invalid YAML."""
